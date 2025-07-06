@@ -1,0 +1,39 @@
+name: Container Image Vulnerability Scan
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  security_scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run: |
+          sudo docker build -t myapp:latest .
+
+      - name: Generate Trivy Reports (Before Failing)
+        run: |
+          sudo trivy image --format json -o trivy-results.json myapp:latest
+          sudo trivy image --severity HIGH,CRITICAL myapp:latest | tee trivy-report.txt
+
+      - name: Upload Trivy Reports
+        uses: actions/upload-artifact@v4  
+        with:
+          name: trivy-reports
+          path: |
+            trivy-report.txt
+            trivy-results.json
+          retention-days: 7
+
+      - name: Fail if Critical Vulnerabilities Found
+        run: |
+          sudo trivy image --exit-code 1 --severity CRITICAL myapp:latest

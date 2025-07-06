@@ -1,0 +1,52 @@
+name: Ansible Security Scan with KICS
+
+on:
+  push:
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  kics-scan:
+    runs-on:
+      - ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Get Changed YAML Files
+      id: changed-yaml
+      run: |
+        CHANGED_FILES=$(git diff --diff-filter=AM --name-only ${{ github.event.before }} ${{ github.sha }})
+        YAML_FILES=""
+        for file in $CHANGED_FILES; do
+          if [[ $file == *.yml || $file == *.yaml ]]; then
+            YAML_FILES="$YAML_FILES $file"
+          fi
+        done
+        echo "yaml-files=$YAML_FILES" >> $GITHUB_OUTPUT
+
+    - name: Add KICS to PATH & Resouces path
+      run: |
+        echo "/home/nikhil/kics/bin" >> $GITHUB_PATH
+        cp -r /home/nikhil/kics/assets ./assets
+
+    - name: Run KICS Scan and Generate HTML Report
+      if: ${{ steps.changed-yaml.outputs.yaml-files != '' }}
+      run: |
+        mkdir -p kics-results
+        echo "Scanning: ${{ steps.changed-yaml.outputs.yaml-files }}"
+        kics scan -p ${{ steps.changed-yaml.outputs.yaml-files }} --type ansible --report-formats html --output-path kics-results || true
+        # echo "Changed YAML Files: ${{ steps.changed-yaml.outputs.yaml-files }}"
+        # for file in ${{ steps.changed-yaml.outputs.yaml-files }}; do
+        #    echo "Scanning $file"
+        #    kics scan -p "$file" --type ansible --report-formats html --output-path kics-results
+        #done
+
+    - name: Upload KICS HTML Report
+      if: ${{ steps.changed-yaml.outputs.yaml-files != '' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: kics-html-report
+        path: kics-results/results.html

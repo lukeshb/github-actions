@@ -1,0 +1,40 @@
+name: SBOM Generation & Security Scans
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  sbom-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Generate SBOM with Syft
+        run: |          
+          sudo syft packages dir:. -o spdx-json > sbom.json
+
+      - name: Build Container Image
+        run: |
+          sudo docker build -t myapp:latest .          
+
+      - name: Upload SBOM Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.json
+
+      - name: Scan SBOM with Grype
+        run: |
+          sudo grype sbom:sbom.json -o table
+
+      - name: Trivy SBOM & Image Scan
+        run: |
+          sudo trivy sbom sbom.json --format json -o trivy-sbom-results.json
+          sudo trivy image --severity HIGH,CRITICAL myapp:latest | tee trivy-report.txt        

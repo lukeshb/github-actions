@@ -1,0 +1,35 @@
+name: Cache Demo Cross OS
+
+on: [push]
+
+jobs:
+  build-on-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate HTML or data
+        run: |
+          mkdir output
+          echo "Windows-built file" > output/index.html
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-docs
+          path: output/
+
+  deploy-on-linux:
+    needs: build-on-windows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: html-docs
+          path: ./html-output
+
+      - name: Show contents
+        run: cat html-output/index.html

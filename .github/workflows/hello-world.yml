@@ -1,0 +1,13 @@
+name: Hello world workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  say-hello:
+    runs-on: test-runner
+    steps:
+      - name: Print a message
+        run: echo "Hello, Github Actions"

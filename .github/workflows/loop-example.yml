@@ -1,0 +1,31 @@
+name: loop example
+
+on:
+  push
+
+jobs:
+  greet-people:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Create dummy file
+      run: |
+        echo "This is file1" >file1.txt
+        echo "This is file2" >file2.txt
+        echo "This is file3" >file3.txt
+
+    - name: Process files
+      run: |
+        for file in file1.txt file2.txt file3.txt
+        do
+          echo "Processing $file"
+          cat $file
+        done
+        
+    - name: Print Greetings
+      run: |
+        NAMES="Sam Alice bob"
+        for name in $NAMES
+        do
+          echo "Hello $name"
+        done

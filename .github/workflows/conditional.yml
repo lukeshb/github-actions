@@ -1,0 +1,17 @@
+name: conditional workflow
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout code
+      uses: actions/checkout@v4
+
+    - name: run tests
+      if: contains(github.event.pull_request.labels.*.name, 'run-tests')
+      run: echo "running tests"

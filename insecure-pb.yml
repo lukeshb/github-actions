@@ -1,0 +1,10 @@
+- name: insecure
+  hosts: all
+  tasks:
+    - name: run shell
+      shell: apt-get install -y nginx
+      
+    - name: weak password
+      user:
+        name: user12
+        password: "password"
